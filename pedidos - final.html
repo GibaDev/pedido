@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<meta charset="UTF-8">
+<html>
+<head>
+  <title>Controle de Pedidos</title>
+  <style>
+    /* Estilos para a tabela */
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 20px;
+    }
+
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Estilos para as linhas alternadas */
+    tr:nth-child(even) {
+      background-color: #f9f9f9;
+    }
+
+    /* Estilos para os botões */
+    .botao {
+      padding: 10px 20px;
+      font-size: 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .botao-adicionar {
+      background-color: #4CAF50;
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .botao-remover {
+      background-color: #FF0000;
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .botao-limpar {
+      margin-top: 10px;
+      background-color: #ff9800;
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .botao-resumo {
+      margin-left: 10px;
+      background-color: #2196F3;
+      color: #fff;
+      font-size: 20px;
+    }
+
+    .botao-filtro {
+      margin-top: 10px;
+      margin-right: 5px;
+      background-color: #ccc;
+      color: #000;
+    }
+
+    .botao:hover {
+      opacity: 0.8;
+    }
+
+    /* Estilos para o valor total e o botão Limpar Lista */
+    #valorTotal {
+      margin-bottom: 10px;
+      font-size: 20px;
+    }
+
+    #botaoLimpar {
+      margin-left: 10px;
+    }
+  
+    .negrito {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Controle de Pedidos - Festa Junina - C.M. Rainha da Paz</h1>
+
+  <div>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('')">Todos</button>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('Lanches')">Lanches</button>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('Sobremesas')">Sobremesas</button>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('Refeições')">Refeições</button>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('Bebidas')">Bebidas</button>
+    <button class="botao botao-filtro" onclick="filtrarPorCategoria('Lazer')">Lazer</button>
+  </div>
+
+  <div>
+    <p id="valorTotal"></p>
+    <button id="botaoLimpar" class="botao botao-limpar" onclick="limparLista()">Limpar Lista</button>
+    <button onclick="gerarResumoPedido()" class="botao botao-resumo">Resumo Pedido</button>
+  </div>
+
+  <table id="lista">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th>Valor Unitário</th>
+        <th>Quantidade</th>
+        <th>Valor Total</th>
+        <!-- <th>Categoria</th> -->
+        <th>Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+// Definindo a lista fixa de itens com NomeItem, Quantidade, Valor Unitário e Categoria
+const listaItens = [
+  { nome: 'Água', quantidade: 0, valorUnitario: 4, categoria: 'Bebidas' },
+  { nome: 'Almoço de Domingo', quantidade: 0, valorUnitario: 35, categoria: 'Refeições' },
+  { nome: 'Arroz Carreteiro', quantidade: 0, valorUnitario: 25, categoria: 'Refeições' },
+  { nome: 'Baião de Dois', quantidade: 0, valorUnitario: 20, categoria: 'Refeições' },
+  { nome: 'Cachorro Quente', quantidade: 0, valorUnitario: 10, categoria: 'Lanches' },
+  { nome: 'Café - copo pequeno', quantidade: 0, valorUnitario: 1, categoria: 'Bebidas' },
+  { nome: 'Caldos', quantidade: 0, valorUnitario: 10, categoria: 'Lanches e Sobremesas' },
+  { nome: 'Camarão Empanado', quantidade: 0, valorUnitario: 12, categoria: 'Lanches' },
+  { nome: 'Canjica', quantidade: 0, valorUnitario: 8, categoria: 'Sobremesas' },
+  { nome: 'Carne de Sol', quantidade: 0, valorUnitario: 25, categoria: 'Refeições' },
+  { nome: 'Cerveja Antarctica', quantidade: 0, valorUnitario: 10, categoria: 'Bebidas' },
+  { nome: 'Cerveja Heineken', quantidade: 0, valorUnitario: 12, categoria: 'Bebidas' },
+  { nome: 'Chocolate Quente', quantidade: 0, valorUnitario: 8, categoria: 'Bebidas' },
+  { nome: 'Churrasquinho / Salsichão', quantidade: 0, valorUnitario: 10, categoria: 'Lanches' },
+  { nome: 'Curau', quantidade: 0, valorUnitario: 8, categoria: 'Sobremesas' },
+  { nome: 'Doces / Salgados / Bolos (valor a partir de)', quantidade: 0, valorUnitario: 7, categoria: 'Sobremesas' },
+  { nome: 'Galinhada', quantidade: 0, valorUnitario: 20, categoria: 'Refeições' },
+  { nome: 'Maçã do Amor', quantidade: 0, valorUnitario: 10, categoria: 'Sobremesas' },
+  { nome: 'Maçã do Amor com Chocolate', quantidade: 0, valorUnitario: 12, categoria: 'Sobremesas' },
+  { nome: 'Milho Cozido', quantidade: 0, valorUnitario: 5, categoria: 'Lanches' },
+  { nome: 'Morango / Uva', quantidade: 0, valorUnitario: 10, categoria: 'Sobremesas' },
+  { nome: 'Morango / Uva com Chocolate', quantidade: 0, valorUnitario: 12, categoria: 'Sobremesas' },
+  { nome: 'Pamonha', quantidade: 0, valorUnitario: 8, categoria: 'Lanches' },
+  { nome: 'Pamonha Assada', quantidade: 0, valorUnitario: 8, categoria: 'Lanches' },
+  { nome: 'Pastel', quantidade: 0, valorUnitario: 8, categoria: 'Lanches' },
+  { nome: 'Pescaria', quantidade: 0, valorUnitario: 8 , categoria: 'Lazer' },
+  { nome: 'Pizza', quantidade: 0, valorUnitario: 8, categoria: 'Lanches' },
+  { nome: 'Quentão', quantidade: 0, valorUnitario: 8, categoria: 'Bebidas' },
+  { nome: 'Refrigerante em Lata', quantidade: 0, valorUnitario: 6, categoria: 'Bebidas' },
+  { nome: 'Sarapatel', quantidade: 0, valorUnitario: 15, categoria: 'Refeições' },
+  { nome: 'Suco em Lata', quantidade: 0, valorUnitario: 8, categoria: 'Bebidas' },
+  { nome: 'Tapioca', quantidade: 0, valorUnitario: 3, categoria: 'Lanches' },
+];
+
+let categoriaSelecionada = ''; // Categoria atualmente selecionada
+
+// Função para adicionar 1 à quantidade do item e atualizar o valor total
+function adicionarItem(index) {
+  listaItens[index].quantidade++;
+  atualizarValorTotal();
+  atualizarLista();
+}
+
+// Função para diminuir 1 da quantidade do item e atualizar o valor total
+function removerItem(index) {
+  if (listaItens[index].quantidade > 0) {
+    listaItens[index].quantidade--;
+    atualizarValorTotal();
+    atualizarLista();
+  }
+}
+
+// Função para filtrar os itens por categoria
+function filtrarPorCategoria(categoria) {
+  categoriaSelecionada = categoria;
+  atualizarLista();
+}
+
+// Função para atualizar o valor total com base na quantidade selecionada
+function atualizarValorTotal() {
+  let valorTotal = 0;
+
+  // Percorre a lista de itens
+  for (let i = 0; i < listaItens.length; i++) {
+    const item = listaItens[i];
+
+    valorTotal += item.quantidade * item.valorUnitario;
+    
+    //if (categoriaSelecionada === '' || item.categoria === categoriaSelecionada) {
+    //  valorTotal += item.quantidade * item.valorUnitario;
+    //}
+  }
+
+  // Atualiza o valor total na página
+  document.getElementById('valorTotal').innerText = `Valor Total: R$ ${valorTotal.toFixed(2)}`;
+  document.getElementById('valorTotal').classList.add("negrito");
+
+}
+
+// Função para atualizar a exibição da lista
+function atualizarLista() {
+    const tabelaElemento = document.getElementById('lista');
+    const tbodyElemento = tabelaElemento.getElementsByTagName('tbody')[0];
+
+    // Limpa o tbody
+    tbodyElemento.innerHTML = '';
+
+    // Percorre a lista de itens
+    for (let i = 0; i < listaItens.length; i++) {
+        const item = listaItens[i];
+
+        // Verifica se o item pertence à categoria selecionada ou se todas as categorias estão sendo exibidas
+        if (categoriaSelecionada === '' || item.categoria === categoriaSelecionada) {
+          // Cria a linha da tabela
+          const linha = document.createElement('tr');
+
+          // Cria as células da tabela
+          const celulaItem = document.createElement('td');
+          celulaItem.innerText = item.nome;
+
+          const celulaValorUnitario = document.createElement('td');
+          celulaValorUnitario.innerText = item.valorUnitario.toFixed(2);
+
+          const celulaQuantidade = document.createElement('td');
+          celulaQuantidade.innerText = item.quantidade;
+
+          const celulaValorTotal = document.createElement('td');
+          celulaValorTotal.innerText = (item.quantidade * item.valorUnitario).toFixed(2);
+
+          //const celulaCategoria = document.createElement('td');
+          //celulaCategoria.innerText = item.categoria;
+
+          const celulaAcoes = document.createElement('td');
+
+          // Cria o botão de adicionar
+          const botaoAdicionar = document.createElement('button');
+          botaoAdicionar.innerText = '+';
+          botaoAdicionar.className = 'botao botao-adicionar';
+          botaoAdicionar.addEventListener('click', () => adicionarItem(i));
+
+          // Cria o botão de remover
+          const botaoRemover = document.createElement('button');
+          botaoRemover.innerText = '-';
+          botaoRemover.className = 'botao botao-remover';
+          botaoRemover.addEventListener('click', () => removerItem(i));
+
+          // Adiciona os botões à célula de ações
+          celulaAcoes.appendChild(botaoAdicionar);
+          celulaAcoes.appendChild(botaoRemover);
+
+          // Adiciona as células à linha
+          linha.appendChild(celulaItem);
+          linha.appendChild(celulaValorUnitario);
+          linha.appendChild(celulaQuantidade);
+          linha.appendChild(celulaValorTotal);
+          //linha.appendChild(celulaCategoria);
+          linha.appendChild(celulaAcoes);
+
+
+          if (item.quantidade > 0) {
+            linha.classList.add("negrito");
+          }
+
+          // Adiciona a linha ao tbody
+          tbodyElemento.appendChild(linha);
+        }
+    }
+}
+
+// Função para limpar as quantidades de todos os itens
+function limparLista() {
+    for (let i = 0; i < listaItens.length; i++) {
+        listaItens[i].quantidade = 0;
+    }
+    atualizarValorTotal();
+    atualizarLista();
+}
+
+// Função para gerar o resumo do pedido
+function gerarResumoPedido() {
+  // Cria uma nova janela com o resumo do pedido
+  const resumoJanela = window.open('', '_blank');
+
+  // Cria o conteúdo HTML da nova página
+  let resumoHTML = `
+    <html>
+    <head>
+    <title>Resumo do Pedido</title>
+    <style>
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    th {
+      background-color: #f2f2f2;
+    }
+    
+    .total {
+      font-weight: bold;
+    }
+
+    /* Estilos para os botões */
+    .botao {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .botao-voltar {
+      margin-top: 10px;
+      background-color: #ff9800;
+      color: #fff;
+    }
+
+    </style>
+    </head>
+    <body>
+    <h1>Resumo do Pedido</h1>
+    <table>
+      <tr>
+        <th>Nome do Item</th>
+        <th>Quantidade</th>
+        <th>Valor Total do Item</th>
+      </tr>`;
+
+  // Percorre a lista de itens
+  for (let i = 0; i < listaItens.length; i++) {
+    const item = listaItens[i];
+
+    // Verifica se o item tem quantidade maior que zero
+    if (item.quantidade > 0) {
+      // Calcula o valor total do item
+      const valorTotalItem = item.quantidade * item.valorUnitario;
+
+      // Adiciona a linha do item à tabela do resumo
+      resumoHTML += `
+        <tr>
+          <td>${item.nome}</td>
+          <td>${item.quantidade}</td>
+          <td>R$ ${valorTotalItem.toFixed(2)}</td>
+        </tr>`;
+    }
+  }
+
+  // Calcula o valor total do pedido
+  let valorTotalPedido = 0;
+  for (let i = 0; i < listaItens.length; i++) {
+    const item = listaItens[i];
+    valorTotalPedido += item.quantidade * item.valorUnitario;
+  }
+
+  // Adiciona a linha com o valor total do pedido à tabela do resumo
+  resumoHTML += `
+    <tr>
+      <td class="total" colspan="2">Valor Total do Pedido:</td>
+      <td class="total">R$ ${valorTotalPedido.toFixed(2)}</td>
+    </tr>
+    </table>
+    <br>
+    <button class="botao botao-voltar" onclick="window.close()">Voltar</button>
+    </body>
+    </html>`;
+
+  // Define o conteúdo HTML da nova página
+  resumoJanela.document.open();
+  resumoJanela.document.write(resumoHTML);
+  resumoJanela.document.close();
+}
+
+// Chama as funções para atualizar a lista e o valor total inicialmente
+atualizarLista();
+atualizarValorTotal();
+</script>
+</body>
+</html>
